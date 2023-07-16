@@ -16,7 +16,7 @@ class App:
     page: ft.Page
 
     ### API Access 
-    REDIRECT_URL: str = 'http://localhost/api/oauth/redirect'
+    REDIRECT_URL: str = 'https://04nada-osu-api-flet.onrender.com/api/oauth/redirect'
 
     CLIENT_ID: str = os.environ.get('OSU_CLIENT_ID', '')
     CLIENT_SECRET: str = os.environ.get('OSU_CLIENT_SECRET', '')
