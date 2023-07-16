@@ -72,7 +72,7 @@ class App:
             authorization_endpoint = App.OAUTH_ENDPOINT,
             token_endpoint = App.TOKEN_ENDPOINT,
             redirect_url = App.REDIRECT_URL,
-            user_scopes = App.USER_SCOPES
+            user_scopes = self.USER_SCOPES
         )
 
         await self.page.login_async(provider) # type: ignore
