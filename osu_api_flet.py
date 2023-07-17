@@ -15,7 +15,7 @@ class App:
     page: ft.Page
 
     ### API Access 
-    REDIRECT_URL: str = 'https://04nada-osu-api-flet.onrender.com/api/oauth/redirect'
+    REDIRECT_URL: str = 'https://zero4nada-osu-api-flet.onrender.com/api/oauth/redirect'
 
     client_id: str = field(init=False)
     client_secret: str = field(init=False)
