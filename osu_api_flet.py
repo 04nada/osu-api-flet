@@ -8,7 +8,7 @@ import os
 
 # ---
 
-Scene = Literal['login', 'search_beatmap', 'search_user']
+Scene = Literal['login', 'search']
 
 @dataclass
 class App:
@@ -28,25 +28,28 @@ class App:
     OSU_PINK = '#FF66AA'
 
     ### Data
+        # search beatmap
     beatmap_search_id: str = field(init=False)
     beatmap_search_results_text: str = field(init=False)
-
+        # search user
     user_search_id_or_name: str = field(init=False)
     user_search_results_text: str = field(init=False)
     
     ### Controls
+    # login
     appbar_login_navigation: ft.AppBar = field(init=False)
     button_login: ft.ElevatedButton = field(init=False)
 
-    appbar_beatmap_search_navigation: ft.AppBar = field(init=False)
-    navbar_beatmap_search_navigation: ft.NavigationBar = field(init=False)
+    # search
+    appbar_search_navigation: ft.AppBar = field(init=False)
+    container_search_navigation_body: ft.Container = field(init=False)
+    navbar_search_navigation: ft.NavigationBar = field(init=False)
     popupmenuitem_logout: ft.PopupMenuItem = field(init=False)
+        # search beatmap
     textfield_beatmap_id: ft.TextField = field(init=False)
     button_beatmap_search: ft.ElevatedButton = field(init=False)
     text_beatmap_search_results: ft.Text = field(init=False)
-
-    appbar_user_search_navigation: ft.AppBar = field(init=False)
-    navbar_user_search_navigation: ft.NavigationBar = field(init=False)
+        # search user
     textfield_user_id_or_name: ft.TextField = field(init=False)
     button_user_search: ft.ElevatedButton = field(init=False)
     text_user_search_results: ft.Text = field(init=False)
@@ -59,7 +62,7 @@ class App:
         self.client_secret: str = os.environ.get('OSU_CLIENT_SECRET', '')
 
         async def login_actual(_) -> None:
-            await self.display('search_beatmap')
+            await self.display('search')
         
         async def logout_actual(_) -> None:
             await self.display('login')
@@ -183,14 +186,17 @@ class App:
 
                 ### View
                 view.controls.append(self.button_login)
-            case 'search_beatmap':
+            case 'search':
                 ### Data
                 self.beatmap_search_id = ''
                 self.beatmap_search_results_text = ''
 
+                self.user_search_id_or_name = ''
+                self.user_search_results_text = ''
+
                 ### Controls
                 self.popupmenuitem_logout = ft.PopupMenuItem(text="Log Out", checked=False, on_click=self.logout_click) # type: ignore
-                self.appbar_beatmap_search_navigation = ft.AppBar(
+                self.appbar_search_navigation = ft.AppBar(
                     title=ft.Text('osu! API Test'),
                     bgcolor=App.OSU_PINK,
                     automatically_imply_leading=False,
@@ -203,16 +209,53 @@ class App:
                     ]
                 )
 
+                # search beatmap
+                self.textfield_beatmap_id = ft.TextField(label='Beatmap ID', value=self.beatmap_search_id, on_submit=self.get_beatmap, width=200, autofocus=True) # type: ignore
+                self.button_beatmap_search = ft.ElevatedButton('Search', on_click=self.get_beatmap) # type: ignore
+                self.text_beatmap_search_results = ft.Text(value=self.beatmap_search_results_text, color='red', selectable=True)
+                
+                # search user
+                self.textfield_user_id_or_name = ft.TextField(label='Username or User ID', value=self.user_search_id_or_name, on_submit=self.get_user, width=200, autofocus=True) # type: ignore
+                self.button_user_search = ft.ElevatedButton('Search', on_click=self.get_user) # type: ignore
+                self.text_user_search_results = ft.Text(value=self.user_search_results_text, color='red', selectable=True)
+
+                # navigate between searches
+                self.container_search_navigation_body = ft.Container(
+                    content=ft.Column(
+                        controls = [
+                            self.textfield_beatmap_id,
+                            self.button_beatmap_search,
+                            self.text_beatmap_search_results
+                        ]
+                    )
+                )
+
                 async def navigate_click(e: ft.ControlEvent) -> None:
                     match int(e.control.selected_index): # type: ignore
                         case 0:
-                            await self.display('search_beatmap')
+                            # search beatmap
+                            self.container_search_navigation_body.content = ft.Column(
+                                controls = [
+                                    self.textfield_beatmap_id,
+                                    self.button_beatmap_search,
+                                    self.text_beatmap_search_results
+                                ]
+                            )
                         case 1:
-                            await self.display('search_user')
+                            # search user
+                            self.container_search_navigation_body.content = ft.Column(
+                                controls = [
+                                    self.textfield_user_id_or_name,
+                                    self.button_user_search,
+                                    self.text_user_search_results
+                                ]
+                            )
                         case _:
-                            pass
-
-                self.navbar_beatmap_search_navigation = ft.NavigationBar(
+                            self.container_search_navigation_body.content = ft.Text('Could not navigate click')
+                        
+                    await self.page.update_async() # type: ignore
+                
+                self.navbar_search_navigation = ft.NavigationBar(
                     selected_index=0,
                     destinations=[
                         ft.NavigationDestination(
@@ -225,70 +268,11 @@ class App:
                     height=80,
                     on_change=navigate_click 
                 )
-
-                self.textfield_beatmap_id = ft.TextField(label='Beatmap ID', value=self.beatmap_search_id, on_submit=self.get_beatmap, width=200, autofocus=True) # type: ignore
-                self.button_beatmap_search = ft.ElevatedButton('Search', on_click=self.get_beatmap) # type: ignore
-                self.text_beatmap_search_results = ft.Text(value=self.beatmap_search_results_text, color='red', selectable=True)
-
+                
                 ### View
-                view.controls.append(self.appbar_beatmap_search_navigation)
-                view.controls.append(self.navbar_beatmap_search_navigation)
-                view.controls.append(self.textfield_beatmap_id)
-                view.controls.append(self.button_beatmap_search)
-                view.controls.append(self.text_beatmap_search_results)
-            case 'search_user':
-                ### Data
-                self.user_search_id_or_name = ''
-                self.user_search_results_text = ''
-
-                ### Controls
-                self.popupmenuitem_logout = ft.PopupMenuItem(text="Log Out", checked=False, on_click=self.logout_click) # type: ignore
-                self.appbar_user_search_navigation = ft.AppBar(
-                    title=ft.Text('osu! API Test'),
-                    bgcolor=App.OSU_PINK,
-                    automatically_imply_leading=False,
-                    actions=[
-                        ft.PopupMenuButton(
-                            items=[
-                                self.popupmenuitem_logout
-                            ]
-                        )
-                    ]
-                )
-
-                async def navigate_click(e: ft.ControlEvent) -> None:
-                    match int(e.control.selected_index): # type: ignore
-                        case 0:
-                            await self.display('search_beatmap')
-                        case 1:
-                            await self.display('search_user')
-                        case _:
-                            pass
-
-                self.navbar_user_search_navigation = ft.NavigationBar(
-                    selected_index=1,
-                    destinations=[
-                        ft.NavigationDestination(
-                            label='Beatmap'
-                        ),
-                        ft.NavigationDestination(
-                            label='User'
-                        )
-                    ],
-                    height=80,
-                    on_change=navigate_click 
-                )
-
-                self.textfield_user_id_or_name = ft.TextField(label='Username or User ID', value=self.user_search_id_or_name, on_submit=self.get_user, width=200, autofocus=True) # type: ignore
-                self.button_user_search = ft.ElevatedButton('Search', on_click=self.get_user) # type: ignore
-                self.text_user_search_results = ft.Text(value=self.user_search_results_text, color='red', selectable=True)
-
-                ### View
-                view.controls.append(self.appbar_user_search_navigation)
-                view.controls.append(self.navbar_user_search_navigation)
-                view.controls.append(self.textfield_user_id_or_name)
-                view.controls.append(self.button_user_search)
-                view.controls.append(self.text_user_search_results)
+                view.controls.append(self.appbar_search_navigation)
+                view.controls.append(self.container_search_navigation_body)
+                view.controls.append(self.navbar_search_navigation)
 
         self.page.views.append(view)
         await self.page.update_async() # type: ignore
@@ -297,7 +281,7 @@ class App:
     async def main(cls, page: ft.Page) -> None:
         page.title = 'osu! API test'
         page.scroll = ft.ScrollMode.AUTO
-
+        
         await App(page).display()
 
 ft.app(target=App.main, port=80, view=ft.WEB_BROWSER) # type: ignore
