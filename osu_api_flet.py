@@ -1,10 +1,9 @@
 from __future__ import annotations
+from typing import Any, Literal
 from dataclasses import dataclass, field
 import flet as ft
 from flet.auth.oauth_provider import OAuthProvider
 import aiohttp
-#import pprint
-from typing import Any, Literal
 import os
 
 # ---
@@ -18,8 +17,8 @@ class App:
     ### API Access 
     REDIRECT_URL: str = 'https://04nada-osu-api-flet.onrender.com/api/oauth/redirect'
 
-    CLIENT_ID: str = os.environ.get('OSU_CLIENT_ID', '')
-    CLIENT_SECRET: str = os.environ.get('OSU_CLIENT_SECRET', '')
+    client_id: str = field(init=False)
+    client_secret: str = field(init=False)
     OAUTH_ENDPOINT: str = 'https://osu.ppy.sh/oauth/authorize'
     TOKEN_ENDPOINT: str = 'https://osu.ppy.sh/oauth/token'
     USER_SCOPES: list[str] = field(default_factory=lambda: ['identify', 'public'])
@@ -56,6 +55,9 @@ class App:
         """after running page.on_login, go to the beatmap search scene of the App (now with an access token inside page.auth)
         likewise, after running page.on_logout, return to the login scene of the App (now without an access token)
         """
+        self.client_id: str = os.environ.get('OSU_CLIENT_ID', '')
+        self.client_secret: str = os.environ.get('OSU_CLIENT_SECRET', '')
+
         async def login_actual(_) -> None:
             await self.display('search_beatmap')
         
@@ -67,8 +69,8 @@ class App:
 
     async def login_click(self, _) -> None:
         provider = OAuthProvider(
-            client_id = App.CLIENT_ID,
-            client_secret = App.CLIENT_SECRET,
+            client_id = self.client_id,
+            client_secret = self.client_secret,
             authorization_endpoint = App.OAUTH_ENDPOINT,
             token_endpoint = App.TOKEN_ENDPOINT,
             redirect_url = App.REDIRECT_URL,
