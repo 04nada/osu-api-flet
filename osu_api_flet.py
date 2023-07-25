@@ -67,7 +67,7 @@ class App:
         self.client_id: str = os.environ.get('OSU_CLIENT_ID', '')
         self.client_secret: str = os.environ.get('OSU_CLIENT_SECRET', '')
 
-        async def login_actual(_) -> None:
+        async def login_actual(_: ft.ControlEvent) -> None:
             self.ossapi_handler = OssapiAsync(
                 client_id = int(self.client_id),
                 client_secret = self.client_secret,
@@ -76,13 +76,13 @@ class App:
 
             await self.display('search')
         
-        async def logout_actual(_) -> None:
+        async def logout_actual(_: ft.ControlEvent) -> None:
             await self.display('login')
 
         self.page.on_login = login_actual
         self.page.on_logout = logout_actual
 
-    async def login_click(self, _) -> None:
+    async def login_click(self, _: ft.ControlEvent) -> None:
         provider = OAuthProvider(
             client_id = self.client_id,
             client_secret = self.client_secret,
@@ -95,7 +95,7 @@ class App:
         await self.page.login_async(provider) # type: ignore
 
     '''
-    async def get_beatmap_raw(self, _) -> None:
+    async def get_beatmap_raw(self, _: ft.ControlEvent) -> None:
         if not self.textfield_beatmap_id.value:
             self.beatmap_search_results_text = 'Search is empty'
             
@@ -134,7 +134,7 @@ class App:
                 await self.page.update_async() # type: ignore
     '''
 
-    async def get_beatmap(self, _) -> None:
+    async def get_beatmap(self, _: ft.ControlEvent) -> None:
         if not self.textfield_beatmap_id.value:
             self.beatmap_search_results_obj = None
             self.beatmap_search_results_text = 'Search is empty'
@@ -148,7 +148,7 @@ class App:
             if self.page.auth.token.access_token: # type: ignore
                 try:
                     beatmap_ossapi: ossapi.Beatmap = await self.ossapi_handler.beatmap(int(self.beatmap_search_id))
-                    self.beatmap_search_results_obj = BeatmapRenderer(self, beatmap_ossapi)
+                    self.beatmap_search_results_obj = await BeatmapRenderer.init_async(self, beatmap_ossapi)
                     self.beatmap_search_results_text = ''
                     
                     self.container_beatmap_search_results.content = self.beatmap_search_results_obj.render_osu_beatmap_info()
@@ -170,7 +170,7 @@ class App:
                 await self.page.update_async() # type: ignore
 
     '''
-    async def get_user_raw(self, _) -> None:
+    async def get_user_raw(self, _: ft.ControlEvent) -> None:
         if not self.textfield_user_id_or_name.value:
             self.user_search_results_text = 'Search is empty'
             
@@ -209,7 +209,7 @@ class App:
                 await self.page.update_async() # type: ignore
     '''
 
-    async def get_user(self, _) -> None:
+    async def get_user(self, _: ft.ControlEvent) -> None:
         if not self.textfield_user_id_or_name.value:
             self.user_search_results_text = 'Search is empty'
             
@@ -241,8 +241,8 @@ class App:
                 self.container_user_search_results.content = None
                 self.text_user_search_results.value = self.user_search_results_text
                 await self.page.update_async() # type: ignore
-
-    async def logout_click(self, _) -> None:
+    
+    async def logout_click(self, _: ft.ControlEvent) -> None:
         """use Flet's built-in logout function to clear the page.auth access token and (manually) return to the login page
         """
         await self.page.logout_async()
@@ -266,7 +266,7 @@ class App:
                     bgcolor=App.OSU_PINK,
                     automatically_imply_leading=False
                 )
-                self.button_login = ft.ElevatedButton('Login', on_click=self.login_click) # type: ignore
+                self.button_login = ft.ElevatedButton('Login', on_click=self.login_click)
 
                 ### View
                 view.controls.append(self.button_login)
@@ -279,7 +279,7 @@ class App:
                 self.user_search_results_text = ''
 
                 ### Controls
-                self.popupmenuitem_logout = ft.PopupMenuItem(text="Log Out", checked=False, on_click=self.logout_click) # type: ignore
+                self.popupmenuitem_logout = ft.PopupMenuItem(text="Log Out", checked=False, on_click=self.logout_click)
                 self.appbar_search_navigation = ft.AppBar(
                     title=ft.Text('osu! API Test'),
                     bgcolor=App.OSU_PINK,
@@ -294,31 +294,23 @@ class App:
                 )
 
                 # search beatmap
-                self.textfield_beatmap_id = ft.TextField(label='Beatmap ID', value=self.beatmap_search_id, on_submit=self.get_beatmap, width=200, autofocus=True) # type: ignore
-                self.button_beatmap_search = ft.ElevatedButton('Search', on_click=self.get_beatmap) # type: ignore
+                self.textfield_beatmap_id = ft.TextField(label='Beatmap ID', value=self.beatmap_search_id, on_submit=self.get_beatmap, width=200, autofocus=True)
+                self.button_beatmap_search = ft.ElevatedButton('Search', on_click=self.get_beatmap)
                 self.container_beatmap_search_results = ft.Container(content=None)
                 self.text_beatmap_search_results = ft.Text(value=self.beatmap_search_results_text, color='red', selectable=True)
                 
                 # search user
-                self.textfield_user_id_or_name = ft.TextField(label='Username or User ID', value=self.user_search_id_or_name, on_submit=self.get_user, width=200, autofocus=True) # type: ignore
-                self.button_user_search = ft.ElevatedButton('Search', on_click=self.get_user) # type: ignore
+                self.textfield_user_id_or_name = ft.TextField(label='Username or User ID', value=self.user_search_id_or_name, on_submit=self.get_user, width=200, autofocus=True)
+                self.button_user_search = ft.ElevatedButton('Search', on_click=self.get_user)
                 self.container_user_search_results = ft.Container()
                 self.text_user_search_results = ft.Text(value=self.user_search_results_text, color='red', selectable=True)
 
                 # navigate between searches
-                self.container_search_navigation_body = ft.Container(
-                    content=ft.Column(
-                        controls = [
-                            self.textfield_beatmap_id,
-                            self.button_beatmap_search,
-                            self.container_beatmap_search_results,
-                            self.text_beatmap_search_results
-                        ]
-                    )
-                )
+                self.container_search_navigation_body = ft.Container()
 
-                async def navigate_click(e: ft.ControlEvent) -> None:
-                    match int(e.control.selected_index): # type: ignore
+                # function to change the contents of the navigation body to a specific "scene"
+                async def set_navigation_body(navigation_scene:int) -> None:
+                    match navigation_scene:
                         case 0:
                             # search beatmap
                             self.container_search_navigation_body.content = ft.Column(
@@ -343,6 +335,13 @@ class App:
                             self.container_search_navigation_body.content = ft.Text('Could not navigate click')
                         
                     await self.page.update_async() # type: ignore
+
+                # set default navigation body to beatmap search
+                await set_navigation_body(0)
+
+                # function to set navigation body to whichever Destination is clicked in the Navigation Bar
+                async def navigate_click(e: ft.ControlEvent) -> None:
+                    await set_navigation_body(e.control.selected_index) # type: ignore
                 
                 # navigation bar destinations
                 self.navbar_search_navigation = ft.NavigationBar(
@@ -382,16 +381,20 @@ class BeatmapRenderer:
 
     ### Ossapi
     osu_beatmapset: ossapi.Beatmapset = field(init=False)
+    osu_beatmap_owner: ossapi.User = field(init=False)
 
     ### Controls
     container_beatmap_body: ft.Container = field(init=False)
     image_beatmap_banner: ft.Image = field(init=False)
     text_beatmap_artist_title: ft.Text = field(init=False)
+    text_beatmapset_creator: ft.Text = field(init=False)
+    text_beatmap_version_owner: ft.Text = field(init=False)
 
     def __post_init__(self) -> None:
         self.osu_beatmapset = self.osu_beatmap.beatmapset()
 
         # --- -----
+
         self.image_beatmap_banner = ft.Image(
             self.osu_beatmapset.covers.cover_2x,
             width=400,
@@ -399,24 +402,111 @@ class BeatmapRenderer:
             gapless_playback=True
         )
         self.text_beatmap_artist_title = ft.Text(
-            value=f'{self.osu_beatmapset.artist} - {self.osu_beatmapset.title}'
+            spans=[
+                ft.TextSpan(
+                    spans = [
+                        ft.TextSpan(
+                            text=f'{self.osu_beatmapset.artist}',
+                            style=ft.TextStyle(
+                                weight=ft.FontWeight.BOLD
+                            ),
+                            url = f'{self.osu_beatmap.url}'
+                        ),
+                        ft.TextSpan(text=' - ', url = f'{self.osu_beatmap.url}'),
+                        ft.TextSpan(
+                            text=f'{self.osu_beatmapset.title}',
+                            style=ft.TextStyle(
+                                weight=ft.FontWeight.BOLD
+                            ),
+                            url = f'{self.osu_beatmap.url}'
+                        )
+                    ]
+                )                
+            ],
+            selectable=True
+        )
+        self.text_beatmapset_creator = ft.Text(
+            value=f'Mapset by ',
+            spans=[
+                ft.TextSpan(
+                    text=f'{self.osu_beatmapset.creator}',
+                    style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD
+                    )
+                )
+            ],
+            selectable=True
         )
 
-        # Beatmap Container
+        # Beatmap Container without diff owner
         self.container_beatmap_body = ft.Container(
             content=ft.Column(
                 controls=[
                     self.image_beatmap_banner,
-                    self.text_beatmap_artist_title
+                    self.text_beatmap_artist_title,
+                    self.text_beatmapset_creator
                 ]
             ),
             bgcolor='#DDDDDD',#App.OSU_PINK,
             padding=ft.padding.all(20)
         )
 
+        # --- -----
+
+    async def _post_init_async(self):
+        # await coroutine to get the user that mapped the beatmap
+            # ignore type until Ossapi fixes the type hint of user() to be Union[User, Awaitable[User]] instead of just User
+        #assert isawaitable(self.osu_beatmap.user())
+        self.osu_beatmap_owner = await self.osu_beatmap.user() # type: ignore       
+        
+        # --- -----
+
+        self.text_beatmap_version_owner = ft.Text(
+            spans=[
+                ft.TextSpan(text='['),
+                ft.TextSpan(
+                    text=f'{self.osu_beatmap.version}',
+                    style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD
+                    ),
+                ),
+                ft.TextSpan(text='] mapped by '),
+                ft.TextSpan(
+                    text=f'{self.osu_beatmap_owner.username}', # type: ignore
+                    style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD
+                    )
+                )
+            ],
+            selectable=True
+        )
+
+        # Beatmap Container with diff owner
+        self.container_beatmap_body = ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.image_beatmap_banner,
+                    self.text_beatmap_artist_title,
+                    self.text_beatmapset_creator,
+                    self.text_beatmap_version_owner
+                ]
+            ),
+            bgcolor='#DDDDDD',#App.OSU_PINK,
+            padding=ft.padding.all(20)
+        )
+
+        # --- -----
+
+    
+    @classmethod
+    async def init_async(cls, app:App, osu_beatmap:ossapi.Beatmap) -> BeatmapRenderer:
+        beatmap_renderer = BeatmapRenderer(app, osu_beatmap)
+        await beatmap_renderer._post_init_async()
+        return beatmap_renderer
+
     def render_osu_beatmap_info(self) -> ft.Container:
         return self.container_beatmap_body
-
+    
 @dataclass
 class UserRenderer:
     ###__init__()
@@ -527,4 +617,4 @@ class UserRenderer:
 
         return self.container_user_body
 
-ft.app(target=App.main, port=80, view=ft.WEB_BROWSER, web_renderer=ft.WebRenderer.HTML) # type: ignore
+ft.app(target=App.main, port=80, view=ft.AppView.WEB_BROWSER, web_renderer=ft.WebRenderer.HTML) # type: ignore
