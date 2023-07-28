@@ -383,12 +383,23 @@ class BeatmapRenderer:
     osu_beatmapset: ossapi.Beatmapset = field(init=False)
     osu_beatmap_owner: ossapi.User = field(init=False)
 
+    ### Data
+
     ### Controls
-    container_beatmap_body: ft.Container = field(init=False)
+    container_beatmap_metadata: ft.Container = field(init=False)
     image_beatmap_banner: ft.Image = field(init=False)
     text_beatmap_artist_title: ft.Text = field(init=False)
     text_beatmapset_creator: ft.Text = field(init=False)
     text_beatmap_version_owner: ft.Text = field(init=False)
+        # beatmap statistics
+    container_beatmap_statistics: ft.Container = field(init=False)
+    text_beatmap_stars: ft.Text = field(init=False)
+    text_beatmap_cs: ft.Text = field(init=False)
+    text_beatmap_ar: ft.Text = field(init=False)
+    text_beatmap_od: ft.Text = field(init=False)
+    text_beatmap_hp: ft.Text = field(init=False)
+        # beatmap mods
+    container_beatmap_mods: ft.Container = field(init=False)
 
     def __post_init__(self) -> None:
         self.osu_beatmapset = self.osu_beatmap.beatmapset()
@@ -426,13 +437,14 @@ class BeatmapRenderer:
             selectable=True
         )
         self.text_beatmapset_creator = ft.Text(
-            value=f'Mapset by ',
             spans=[
+                ft.TextSpan(text='Mapset by '),
                 ft.TextSpan(
                     text=f'{self.osu_beatmapset.creator}',
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD
-                    )
+                    ),
+                    url=f'https://osu.ppy.sh/u/{self.osu_beatmapset.creator}'
                 )
             ],
             selectable=True
@@ -475,14 +487,15 @@ class BeatmapRenderer:
                     text=f'{self.osu_beatmap_owner.username}', # type: ignore
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD
-                    )
+                    ),
+                    url=f'https://osu.ppy.sh/u/{self.osu_beatmap_owner.username}' # type: ignore
                 )
             ],
             selectable=True
         )
 
         # Beatmap Container with diff owner
-        self.container_beatmap_body = ft.Container(
+        self.container_beatmap_metadata = ft.Container(
             content=ft.Column(
                 controls=[
                     self.image_beatmap_banner,
@@ -497,6 +510,35 @@ class BeatmapRenderer:
 
         # --- -----
 
+        self.text_beatmap_stars = ft.Text(
+            value=f'Stars: {self.osu_beatmap.difficulty_rating}'
+        )
+        self.text_beatmap_cs = ft.Text(
+            value=f'CS: {self.osu_beatmap.cs}'
+        )
+        self.text_beatmap_ar = ft.Text(
+            value=f'AR: {self.osu_beatmap.ar}'
+        )
+        self.text_beatmap_od = ft.Text(
+            value=f'OD: {self.osu_beatmap.accuracy}'
+        )
+        self.text_beatmap_hp = ft.Text(
+            value=f'HP: {self.osu_beatmap.drain}'
+        )
+
+        self.container_beatmap_statistics = ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.text_beatmap_stars,
+                    self.text_beatmap_cs,
+                    self.text_beatmap_ar,
+                    self.text_beatmap_od,
+                    self.text_beatmap_hp
+                ]
+            ),
+            bgcolor='#DDDDDD',#App.OSU_PINK,
+            padding=ft.padding.all(20)
+        )
     
     @classmethod
     async def init_async(cls, app:App, osu_beatmap:ossapi.Beatmap) -> BeatmapRenderer:
@@ -505,8 +547,16 @@ class BeatmapRenderer:
         return beatmap_renderer
 
     def render_osu_beatmap_info(self) -> ft.Container:
-        return self.container_beatmap_body
-    
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.container_beatmap_metadata,
+                    self.container_beatmap_statistics
+                ]
+            )
+        )
+
+
 @dataclass
 class UserRenderer:
     ###__init__()
@@ -536,7 +586,8 @@ class UserRenderer:
         if self.osu_user.country:
             self.osu_user_country = self.osu_user.country
 
-    def render_osu_user_info(self) -> ft.Container:
+        # --- -----
+
         # User Avatar
         self.image_user_profile_url = ft.Image(
             src=self.osu_user.avatar_url,
@@ -615,6 +666,9 @@ class UserRenderer:
             padding=ft.padding.all(20)
         )
 
+        # --- -----
+
+    def render_osu_user_info(self) -> ft.Container:
         return self.container_user_body
 
 ft.app(target=App.main, port=80, view=ft.AppView.WEB_BROWSER, web_renderer=ft.WebRenderer.HTML) # type: ignore
