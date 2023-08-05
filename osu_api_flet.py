@@ -735,7 +735,7 @@ class UserRenderer:
             spans=[
                 ft.TextSpan(text='pp: ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
-                    text=f'{self.osu_user_statistics.pp}pp',
+                    text='{:,}pp'.format(self.osu_user_statistics.pp),
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
@@ -761,7 +761,7 @@ class UserRenderer:
             spans=[
                 ft.TextSpan(text='Ranked Score: ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
-                    text=f'{self.osu_user_statistics.ranked_score}',
+                    text='{:,}'.format(self.osu_user_statistics.ranked_score), # format ranked score with commas between every thousand
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
