@@ -711,6 +711,7 @@ class UserRenderer:
                 ft.TextSpan(
                     text=f'#{self.osu_user_statistics.global_rank}' if self.osu_user_statistics.global_rank else '#--',
                     style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
@@ -723,6 +724,7 @@ class UserRenderer:
                 ft.TextSpan(
                     text=f'#{self.osu_user_statistics.country_rank}' if self.osu_user_statistics.country_rank else '#--',
                     style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
@@ -731,10 +733,11 @@ class UserRenderer:
         )
         self.text_user_pp = ft.Text(
             spans=[
-                ft.TextSpan(text='pp:', style=ft.TextStyle(color=ft.colors.BLACK)),
+                ft.TextSpan(text='pp: ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
                     text=f'{self.osu_user_statistics.pp}pp',
                     style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
@@ -747,6 +750,7 @@ class UserRenderer:
                 ft.TextSpan(
                     text=f'{self.osu_user_statistics.hit_accuracy}%',
                     style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
@@ -759,6 +763,7 @@ class UserRenderer:
                 ft.TextSpan(
                     text=f'{self.osu_user_statistics.ranked_score}',
                     style=ft.TextStyle(
+                        weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
