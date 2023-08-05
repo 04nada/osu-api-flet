@@ -262,7 +262,7 @@ class App:
             case 'login':
                 ### Controls
                 self.appbar_beatmap_search_navigation = ft.AppBar(
-                    title=ft.Text('osu! API Test'),
+                    title=ft.Text('osu! API Test', color=ft.colors.BLACK),
                     bgcolor=App.OSU_PINK,
                     automatically_imply_leading=False
                 )
@@ -281,7 +281,7 @@ class App:
                 ### Controls
                 self.popupmenuitem_logout = ft.PopupMenuItem(text="Log Out", checked=False, on_click=self.logout_click)
                 self.appbar_search_navigation = ft.AppBar(
-                    title=ft.Text('osu! API Test'),
+                    title=ft.Text(value='osu! API Test', color=ft.colors.BLACK),
                     bgcolor=App.OSU_PINK,
                     automatically_imply_leading=False,
                     actions=[
@@ -296,14 +296,14 @@ class App:
                 # search beatmap
                 self.textfield_beatmap_id = ft.TextField(label='Beatmap ID', value=self.beatmap_search_id, on_submit=self.get_beatmap, width=200, autofocus=True)
                 self.button_beatmap_search = ft.ElevatedButton('Search', on_click=self.get_beatmap)
-                self.container_beatmap_search_results = ft.Container(content=None)
-                self.text_beatmap_search_results = ft.Text(value=self.beatmap_search_results_text, color='red', selectable=True)
+                self.container_beatmap_search_results = ft.Container()
+                self.text_beatmap_search_results = ft.Text(value=self.beatmap_search_results_text, color=ft.colors.RED, selectable=True)
                 
                 # search user
                 self.textfield_user_id_or_name = ft.TextField(label='Username or User ID', value=self.user_search_id_or_name, on_submit=self.get_user, width=200, autofocus=True)
                 self.button_user_search = ft.ElevatedButton('Search', on_click=self.get_user)
                 self.container_user_search_results = ft.Container()
-                self.text_user_search_results = ft.Text(value=self.user_search_results_text, color='red', selectable=True)
+                self.text_user_search_results = ft.Text(value=self.user_search_results_text, color=ft.colors.RED, selectable=True)
 
                 # navigate between searches
                 self.container_search_navigation_body = ft.Container()
@@ -332,7 +332,7 @@ class App:
                                 ]
                             )
                         case _:
-                            self.container_search_navigation_body.content = ft.Text('Could not navigate click')
+                            self.container_search_navigation_body.content = ft.Text('Could not navigate click', color=ft.colors.BLACK)
                         
                     await self.page.update_async() # type: ignore
 
@@ -398,6 +398,14 @@ class BeatmapRenderer:
     text_beatmap_ar: ft.Text = field(init=False)
     text_beatmap_od: ft.Text = field(init=False)
     text_beatmap_hp: ft.Text = field(init=False)
+        # beatmap settings
+    datatable_beatmap_settings: ft.DataTable = field(init=False)
+    text_beatmap_length: ft.Text = field(init=False)
+    text_beatmap_bpm: ft.Text = field(init=False)
+    text_beatmap_max_combo: ft.Text = field(init=False)
+    text_beatmap_number_of_circles: ft.Text = field(init=False)
+    text_beatmap_number_of_sliders: ft.Text = field(init=False)
+    text_beatmap_number_of_spinners: ft.Text = field(init=False)
         # beatmap mods
     container_beatmap_mods: ft.Container = field(init=False)
 
@@ -419,21 +427,24 @@ class BeatmapRenderer:
                         ft.TextSpan(
                             text=f'{self.osu_beatmapset.artist}',
                             style=ft.TextStyle(
-                                weight=ft.FontWeight.BOLD
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.colors.BLACK
                             ),
                             url = f'{self.osu_beatmap.url}'
                         ),
-                        ft.TextSpan(text=' - ', url = f'{self.osu_beatmap.url}'),
+                        ft.TextSpan(text=' - ', style=ft.TextStyle(color=ft.colors.BLACK), url = f'{self.osu_beatmap.url}'),
                         ft.TextSpan(
                             text=f'{self.osu_beatmapset.title}',
                             style=ft.TextStyle(
-                                weight=ft.FontWeight.BOLD
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.colors.BLACK
                             ),
                             url = f'{self.osu_beatmap.url}'
                         )
                     ]
                 )                
             ],
+            size=20,
             selectable=True
         )
         self.text_beatmapset_creator = ft.Text(
@@ -442,7 +453,8 @@ class BeatmapRenderer:
                 ft.TextSpan(
                     text=f'{self.osu_beatmapset.creator}',
                     style=ft.TextStyle(
-                        weight=ft.FontWeight.BOLD
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.colors.BLACK
                     ),
                     url=f'https://osu.ppy.sh/u/{self.osu_beatmapset.creator}'
                 )
@@ -465,6 +477,109 @@ class BeatmapRenderer:
 
         # --- -----
 
+        self.text_beatmap_stars = ft.Text(
+            value=f'Stars: {self.osu_beatmap.difficulty_rating}',
+            color=ft.colors.BLACK
+        )
+        self.text_beatmap_cs = ft.Text(
+            value=f'{self.osu_beatmap.cs}',
+            color=ft.colors.BLACK
+        )
+        self.text_beatmap_ar = ft.Text(
+            value=f'{self.osu_beatmap.ar}',
+            color=ft.colors.BLACK
+        )
+        self.text_beatmap_od = ft.Text(
+            value=f'{self.osu_beatmap.accuracy}',
+            color=ft.colors.BLACK
+        )
+        self.text_beatmap_hp = ft.Text(
+            value=f'{self.osu_beatmap.drain}',
+            color=ft.colors.BLACK
+        )
+
+        self.container_beatmap_statistics = ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.text_beatmap_stars,
+                ]
+            ),
+            bgcolor='#DDDDDD',#App.OSU_PINK,
+            padding=ft.padding.all(20)
+        )
+
+        self.datatable_beatmap_settings = ft.DataTable(
+            columns=[
+                ft.DataColumn(
+                    label=ft.Container(
+                        content=ft.Text(value='CS', color=ft.colors.BLACK),
+                        bgcolor='#FFDDDD',
+                        alignment=ft.alignment.center
+                    )
+                ),
+                ft.DataColumn(
+                    label=ft.Container(
+                        content=ft.Text(value='AR', color=ft.colors.BLACK),
+                        bgcolor='#FFDDDD',
+                        alignment=ft.alignment.center
+                    )
+                ),
+                ft.DataColumn(
+                    label=ft.Container(
+                        content=ft.Text(value='OD', color=ft.colors.BLACK),
+                        bgcolor='#FFDDDD',
+                        alignment=ft.alignment.center
+                    )
+                ),
+                ft.DataColumn(
+                    label=ft.Container(
+                        content=ft.Text(value='HP', color=ft.colors.BLACK),
+                        bgcolor='#FFDDDD',
+                        alignment=ft.alignment.center
+                    )
+                ),
+            ],
+            rows=[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(
+                            content=ft.Container(
+                                content=self.text_beatmap_cs,
+                                bgcolor='#FFDDDD',
+                                alignment=ft.alignment.center
+                            )
+                        ),
+                        ft.DataCell(
+                            content=ft.Container(
+                                content=self.text_beatmap_ar,
+                                bgcolor='#FFDDDD',
+                                alignment=ft.alignment.center
+                            )
+                        ),
+                        ft.DataCell(
+                            content=ft.Container(
+                                content=self.text_beatmap_od,
+                                bgcolor='#FFDDDD',
+                                alignment=ft.alignment.center
+                            )
+                        ),
+                        ft.DataCell(
+                            content=ft.Container(
+                                content=self.text_beatmap_hp,
+                                bgcolor='#FFDDDD',
+                                alignment=ft.alignment.center
+                            )
+                        ),
+                    ]
+                )
+            ],
+            horizontal_margin=20,
+            column_spacing=20,
+            border=ft.border.all(1, "black"),
+            vertical_lines=ft.border.BorderSide(1, "black"),
+            horizontal_lines=ft.border.BorderSide(1, "black")
+        )
+
     async def _post_init_async(self):
         # await coroutine to get the user that mapped the beatmap
             # ignore type until Ossapi fixes the type hint of user() to be Union[User, Awaitable[User]] instead of just User
@@ -475,18 +590,20 @@ class BeatmapRenderer:
 
         self.text_beatmap_version_owner = ft.Text(
             spans=[
-                ft.TextSpan(text='['),
+                ft.TextSpan(text='[', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
                     text=f'{self.osu_beatmap.version}',
                     style=ft.TextStyle(
-                        weight=ft.FontWeight.BOLD
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.colors.BLACK
                     ),
                 ),
-                ft.TextSpan(text='] mapped by '),
+                ft.TextSpan(text='] mapped by ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
                     text=f'{self.osu_beatmap_owner.username}', # type: ignore
                     style=ft.TextStyle(
-                        weight=ft.FontWeight.BOLD
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.colors.BLACK
                     ),
                     url=f'https://osu.ppy.sh/u/{self.osu_beatmap_owner.username}' # type: ignore
                 )
@@ -510,35 +627,7 @@ class BeatmapRenderer:
 
         # --- -----
 
-        self.text_beatmap_stars = ft.Text(
-            value=f'Stars: {self.osu_beatmap.difficulty_rating}'
-        )
-        self.text_beatmap_cs = ft.Text(
-            value=f'CS: {self.osu_beatmap.cs}'
-        )
-        self.text_beatmap_ar = ft.Text(
-            value=f'AR: {self.osu_beatmap.ar}'
-        )
-        self.text_beatmap_od = ft.Text(
-            value=f'OD: {self.osu_beatmap.accuracy}'
-        )
-        self.text_beatmap_hp = ft.Text(
-            value=f'HP: {self.osu_beatmap.drain}'
-        )
-
-        self.container_beatmap_statistics = ft.Container(
-            content=ft.Column(
-                controls=[
-                    self.text_beatmap_stars,
-                    self.text_beatmap_cs,
-                    self.text_beatmap_ar,
-                    self.text_beatmap_od,
-                    self.text_beatmap_hp
-                ]
-            ),
-            bgcolor='#DDDDDD',#App.OSU_PINK,
-            padding=ft.padding.all(20)
-        )
+        
     
     @classmethod
     async def init_async(cls, app:App, osu_beatmap:ossapi.Beatmap) -> BeatmapRenderer:
@@ -551,7 +640,8 @@ class BeatmapRenderer:
             content=ft.Column(
                 controls=[
                     self.container_beatmap_metadata,
-                    self.container_beatmap_statistics
+                    self.container_beatmap_statistics,
+                    self.datatable_beatmap_settings
                 ]
             )
         )
@@ -600,36 +690,79 @@ class UserRenderer:
         # User Identification
         self.text_user_username = ft.Text(
             value=f'{self.osu_user.username}',
+            color=ft.colors.BLACK,
             selectable=True
         )
         self.text_user_title = ft.Text(
             value=f'"{self.osu_user.title}"',
+            color=ft.colors.BLACK,
             selectable=True
         )
         self.text_user_country = ft.Text(
             value=f'{self.osu_user.country_code} {self.osu_user_country.name}',
+            color=ft.colors.BLACK,
             selectable=True
         )
 
         # User Statistics
         self.text_user_rank = ft.Text(
-            value=f'Global: #{self.osu_user_statistics.global_rank}' if self.osu_user_statistics.global_rank else 'Global: #--',
+            spans=[
+                ft.TextSpan(text='Global: ', style=ft.TextStyle(color=ft.colors.BLACK)),
+                ft.TextSpan(
+                    text=f'#{self.osu_user_statistics.global_rank}' if self.osu_user_statistics.global_rank else '#--',
+                    style=ft.TextStyle(
+                        color=ft.colors.BLACK
+                    )
+                )
+            ],
             selectable=True
         )
         self.text_user_country_rank = ft.Text(
-            value=f'Country: #{self.osu_user_statistics.country_rank}' if self.osu_user_statistics.country_rank else 'Country: #--',
+            spans=[
+                ft.TextSpan(text='Country: ', style=ft.TextStyle(color=ft.colors.BLACK)),
+                ft.TextSpan(
+                    text=f'#{self.osu_user_statistics.country_rank}' if self.osu_user_statistics.country_rank else '#--',
+                    style=ft.TextStyle(
+                        color=ft.colors.BLACK
+                    )
+                )
+            ],
             selectable=True
         )
         self.text_user_pp = ft.Text(
-            value=f'pp: {self.osu_user_statistics.pp}',
+            spans=[
+                ft.TextSpan(text='pp:', style=ft.TextStyle(color=ft.colors.BLACK)),
+                ft.TextSpan(
+                    text=f'{self.osu_user_statistics.pp}pp',
+                    style=ft.TextStyle(
+                        color=ft.colors.BLACK
+                    )
+                )
+            ],
             selectable=True
         )
         self.text_user_accuracy = ft.Text(
-            value=f'Hit Accuracy: {self.osu_user_statistics.hit_accuracy}',
+            spans=[
+                ft.TextSpan(text='Hit Accuracy: ', style=ft.TextStyle(color=ft.colors.BLACK)),
+                ft.TextSpan(
+                    text=f'{self.osu_user_statistics.hit_accuracy}%',
+                    style=ft.TextStyle(
+                        color=ft.colors.BLACK
+                    )
+                )
+            ],
             selectable=True
         )
         self.text_user_ranked_score = ft.Text(
-            value=f'Ranked Score: {self.osu_user_statistics.ranked_score}',
+            spans=[
+                ft.TextSpan(text='Ranked Score: ', style=ft.TextStyle(color=ft.colors.BLACK)),
+                ft.TextSpan(
+                    text=f'{self.osu_user_statistics.ranked_score}',
+                    style=ft.TextStyle(
+                        color=ft.colors.BLACK
+                    )
+                )
+            ],
             selectable=True
         )
 
