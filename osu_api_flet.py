@@ -477,26 +477,11 @@ class BeatmapRenderer:
 
         # --- -----
 
-        self.text_beatmap_stars = ft.Text(
-            value=f'Stars: {self.osu_beatmap.difficulty_rating}',
-            color=ft.colors.BLACK
-        )
-        self.text_beatmap_cs = ft.Text(
-            value=f'{self.osu_beatmap.cs}',
-            color=ft.colors.BLACK
-        )
-        self.text_beatmap_ar = ft.Text(
-            value=f'{self.osu_beatmap.ar}',
-            color=ft.colors.BLACK
-        )
-        self.text_beatmap_od = ft.Text(
-            value=f'{self.osu_beatmap.accuracy}',
-            color=ft.colors.BLACK
-        )
-        self.text_beatmap_hp = ft.Text(
-            value=f'{self.osu_beatmap.drain}',
-            color=ft.colors.BLACK
-        )
+        self.text_beatmap_stars = ft.Text(value=f'Stars: {self.osu_beatmap.difficulty_rating}')
+        self.text_beatmap_cs = ft.Text(value=f'{self.osu_beatmap.cs}')
+        self.text_beatmap_ar = ft.Text(value=f'{self.osu_beatmap.ar}')
+        self.text_beatmap_od = ft.Text(value=f'{self.osu_beatmap.accuracy}')
+        self.text_beatmap_hp = ft.Text(value=f'{self.osu_beatmap.drain}')
 
         self.container_beatmap_statistics = ft.Container(
             content=ft.Column(
@@ -512,29 +497,29 @@ class BeatmapRenderer:
             columns=[
                 ft.DataColumn(
                     label=ft.Container(
-                        content=ft.Text(value='CS', color=ft.colors.BLACK),
-                        bgcolor='#FFDDDD',
+                        content=ft.Text(value='CS'),
+                        #bgcolor='#FFDDDD',
                         alignment=ft.alignment.center
                     )
                 ),
                 ft.DataColumn(
                     label=ft.Container(
-                        content=ft.Text(value='AR', color=ft.colors.BLACK),
-                        bgcolor='#FFDDDD',
+                        content=ft.Text(value='AR'),
+                        #bgcolor='#FFDDDD',
                         alignment=ft.alignment.center
                     )
                 ),
                 ft.DataColumn(
                     label=ft.Container(
-                        content=ft.Text(value='OD', color=ft.colors.BLACK),
-                        bgcolor='#FFDDDD',
+                        content=ft.Text(value='OD'),
+                        #bgcolor='#FFDDDD',
                         alignment=ft.alignment.center
                     )
                 ),
                 ft.DataColumn(
                     label=ft.Container(
-                        content=ft.Text(value='HP', color=ft.colors.BLACK),
-                        bgcolor='#FFDDDD',
+                        content=ft.Text(value='HP'),
+                        #bgcolor='#FFDDDD',
                         alignment=ft.alignment.center
                     )
                 ),
@@ -545,39 +530,47 @@ class BeatmapRenderer:
                         ft.DataCell(
                             content=ft.Container(
                                 content=self.text_beatmap_cs,
-                                bgcolor='#FFDDDD',
+                                #bgcolor='#FFDDDD',
                                 alignment=ft.alignment.center
                             )
                         ),
                         ft.DataCell(
                             content=ft.Container(
                                 content=self.text_beatmap_ar,
-                                bgcolor='#FFDDDD',
+                                #bgcolor='#FFDDDD',
                                 alignment=ft.alignment.center
                             )
                         ),
                         ft.DataCell(
                             content=ft.Container(
                                 content=self.text_beatmap_od,
-                                bgcolor='#FFDDDD',
+                                #bgcolor='#FFDDDD',
                                 alignment=ft.alignment.center
                             )
                         ),
                         ft.DataCell(
                             content=ft.Container(
                                 content=self.text_beatmap_hp,
-                                bgcolor='#FFDDDD',
+                                #bgcolor='#FFDDDD',
                                 alignment=ft.alignment.center
                             )
                         ),
                     ]
                 )
             ],
-            horizontal_margin=20,
-            column_spacing=20,
+                # borders
             border=ft.border.all(1, "black"),
             vertical_lines=ft.border.BorderSide(1, "black"),
-            horizontal_lines=ft.border.BorderSide(1, "black")
+            horizontal_lines=ft.border.BorderSide(1, "black"),
+                # padding
+            horizontal_margin=5,
+            column_spacing=5*2, # 2x horizontal margin
+                # heading row
+            heading_row_height=20,
+            heading_text_style=ft.TextStyle(color=ft.colors.BLACK),
+                # data row
+            data_row_height=20,
+            data_text_style=ft.TextStyle(color=ft.colors.BLACK)
         )
 
     async def _post_init_async(self):
@@ -624,10 +617,6 @@ class BeatmapRenderer:
             bgcolor='#DDDDDD',#App.OSU_PINK,
             padding=ft.padding.all(20)
         )
-
-        # --- -----
-
-        
     
     @classmethod
     async def init_async(cls, app:App, osu_beatmap:ossapi.Beatmap) -> BeatmapRenderer:
@@ -645,7 +634,6 @@ class BeatmapRenderer:
                 ]
             )
         )
-
 
 @dataclass
 class UserRenderer:
@@ -683,8 +671,7 @@ class UserRenderer:
             src=self.osu_user.avatar_url,
             width=150,
             height=150,
-            fit=ft.ImageFit.CONTAIN,
-            gapless_playback=True,
+            fit=ft.ImageFit.CONTAIN
         )
 
         # User Identification
