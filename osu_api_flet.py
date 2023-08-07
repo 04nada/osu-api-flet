@@ -477,7 +477,7 @@ class BeatmapRenderer:
 
         # --- -----
 
-        self.text_beatmap_stars = ft.Text(value=f'Stars: {self.osu_beatmap.difficulty_rating}')
+        self.text_beatmap_stars = ft.Text(value=f'Stars: {self.osu_beatmap.difficulty_rating}', color=ft.colors.BLACK)
         self.text_beatmap_cs = ft.Text(value=f'{self.osu_beatmap.cs}')
         self.text_beatmap_ar = ft.Text(value=f'{self.osu_beatmap.ar}')
         self.text_beatmap_od = ft.Text(value=f'{self.osu_beatmap.accuracy}')
@@ -566,10 +566,12 @@ class BeatmapRenderer:
             horizontal_margin=5,
             column_spacing=5*2, # 2x horizontal margin
                 # heading row
-            heading_row_height=20,
+            heading_row_height=25,
+            heading_row_color=ft.colors.WHITE,
             heading_text_style=ft.TextStyle(color=ft.colors.BLACK),
                 # data row
-            data_row_height=20,
+            data_row_height=25,
+            data_row_color=ft.colors.WHITE,
             data_text_style=ft.TextStyle(color=ft.colors.BLACK)
         )
 
