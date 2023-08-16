@@ -148,6 +148,8 @@ class App:
             if self.page.auth.token.access_token: # type: ignore
                 try:
                     beatmap_ossapi: ossapi.Beatmap = await self.ossapi_handler.beatmap(int(self.beatmap_search_id))
+                    a: ossapi.models.DifficultyAttributes = await self.ossapi_handler.beatmap_attributes(int(self.beatmap_search_id), mods=ossapi.Mod(['DT']))
+                    print(a)
                     self.beatmap_search_results_obj = await BeatmapRenderer.init_async(self, beatmap_ossapi)
                     self.beatmap_search_results_text = ''
                     
@@ -394,18 +396,18 @@ class BeatmapRenderer:
         # beatmap statistics
     container_beatmap_statistics: ft.Container = field(init=False)
     text_beatmap_stars: ft.Text = field(init=False)
-    text_beatmap_cs: ft.Text = field(init=False)
-    text_beatmap_ar: ft.Text = field(init=False)
-    text_beatmap_od: ft.Text = field(init=False)
-    text_beatmap_hp: ft.Text = field(init=False)
-        # beatmap settings
-    datatable_beatmap_settings: ft.DataTable = field(init=False)
     text_beatmap_length: ft.Text = field(init=False)
     text_beatmap_bpm: ft.Text = field(init=False)
     text_beatmap_max_combo: ft.Text = field(init=False)
     text_beatmap_number_of_circles: ft.Text = field(init=False)
     text_beatmap_number_of_sliders: ft.Text = field(init=False)
     text_beatmap_number_of_spinners: ft.Text = field(init=False)
+        # beatmap settings
+    datatable_beatmap_settings: ft.DataTable = field(init=False)
+    text_beatmap_cs: ft.Text = field(init=False)
+    text_beatmap_ar: ft.Text = field(init=False)
+    text_beatmap_od: ft.Text = field(init=False)
+    text_beatmap_hp: ft.Text = field(init=False)
         # beatmap mods
     container_beatmap_mods: ft.Container = field(init=False)
 
@@ -478,20 +480,27 @@ class BeatmapRenderer:
         # --- -----
 
         self.text_beatmap_stars = ft.Text(value=f'Stars: {self.osu_beatmap.difficulty_rating}', color=ft.colors.BLACK)
-        self.text_beatmap_cs = ft.Text(value=f'{self.osu_beatmap.cs}')
-        self.text_beatmap_ar = ft.Text(value=f'{self.osu_beatmap.ar}')
-        self.text_beatmap_od = ft.Text(value=f'{self.osu_beatmap.accuracy}')
-        self.text_beatmap_hp = ft.Text(value=f'{self.osu_beatmap.drain}')
+        self.text_beatmap_length = ft.Text(value=f'Length: {self.osu_beatmap.total_length}', color=ft.colors.BLACK)
+        self.text_beatmap_max_combo = ft.Text(value=f'Max Combo: {self.osu_beatmap.max_combo}', color=ft.colors.BLACK)
+        self.text_beatmap_bpm = ft.Text(value=f'BPM: {self.osu_beatmap.bpm}', color=ft.colors.BLACK)
 
         self.container_beatmap_statistics = ft.Container(
             content=ft.Column(
                 controls=[
                     self.text_beatmap_stars,
+                    self.text_beatmap_length,
+                    self.text_beatmap_max_combo,
+                    self.text_beatmap_bpm
                 ]
             ),
             bgcolor='#DDDDDD',#App.OSU_PINK,
             padding=ft.padding.all(20)
         )
+
+        self.text_beatmap_cs = ft.Text(value=f'{self.osu_beatmap.cs}')
+        self.text_beatmap_ar = ft.Text(value=f'{self.osu_beatmap.ar}')
+        self.text_beatmap_od = ft.Text(value=f'{self.osu_beatmap.accuracy}')
+        self.text_beatmap_hp = ft.Text(value=f'{self.osu_beatmap.drain}')
 
         self.datatable_beatmap_settings = ft.DataTable(
             columns=[
@@ -559,7 +568,7 @@ class BeatmapRenderer:
                 )
             ],
                 # borders
-            border=ft.border.all(1, "black"),
+            border=ft.border.all(2, "black"),
             vertical_lines=ft.border.BorderSide(1, "black"),
             horizontal_lines=ft.border.BorderSide(1, "black"),
                 # padding
@@ -605,7 +614,7 @@ class BeatmapRenderer:
             ],
             selectable=True
         )
-
+        
         # Beatmap Container with diff owner
         self.container_beatmap_metadata = ft.Container(
             content=ft.Column(
