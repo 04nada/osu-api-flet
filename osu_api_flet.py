@@ -8,11 +8,29 @@ import os
 import ossapi as ossapi # type: ignore
 import ossapi.models # type: ignore
 from ossapi import OssapiAsync # type: ignore
-from pprint import pprint
 
-# ---
+# --- -----
 
 ModWorthPP = Literal['HD', 'HR', 'EZ', 'DT', 'NC', 'HT', 'FL', 'NF', 'SO']
+
+def get_beatmap_cs_with_mods(cs: float, mods: list[ModWorthPP]) -> float:
+    if 'EZ' in mods:
+        return cs*0.5
+    elif 'HR' in mods:
+        return min(cs*1.3, 10.0)
+    else:
+        return cs
+
+def get_beatmap_hp_with_mods(hp: float, mods: list[ModWorthPP]) -> float:
+    if 'EZ' in mods:
+        return hp*0.5
+    elif 'HR' in mods:
+        return min(hp*1.4, 10.0)
+    else:
+        return hp
+
+# --- -----
+
 Scene = Literal['login', 'search']
 
 @dataclass
@@ -31,6 +49,13 @@ class App:
     ossapi_handler: OssapiAsync = field(init=False)
 
     OSU_PINK = '#FF66AA'
+    OSU_COLOR_HD = '#F1C232'
+    OSU_COLOR_HR = '#CC0000'
+    OSU_COLOR_EZ = '#6AA84F'
+    OSU_COLOR_DT = '#674EA7'
+    OSU_COLOR_NC = '#674EA7'
+    OSU_COLOR_HT = '#45818E'
+    OSU_COLOR_FL = '#434343'
 
     ### Data
         # search beatmap
@@ -581,9 +606,9 @@ class BeatmapRenderer:
             border=ft.border.all(2, "black"),
             vertical_lines=ft.border.BorderSide(1, "black"),
             horizontal_lines=ft.border.BorderSide(1, "black"),
-                # padding
-            horizontal_margin=5,
-            column_spacing=5*2, # 2x horizontal margin
+                # padding (column)
+            horizontal_margin=15,
+            column_spacing=15*2, # 2x horizontal margin
                 # heading row
             heading_row_height=25,
             heading_row_color=ft.colors.WHITE,
@@ -705,6 +730,7 @@ class BeatmapRenderer:
                 ]
             ),
             bgcolor='#DDDDDD',#App.OSU_PINK,
+            padding=ft.padding.all(20)
         )
 
     async def _post_init_async(self):
@@ -775,14 +801,73 @@ class BeatmapRenderer:
                     # add the actual mod to the list of selected mods
                     self.selected_mods_list.append(mod)
 
+            # store difficulty attributes in instance variable to preserve API call results
             self.osu_beatmap_difficulty_attributes = await self._app.ossapi_handler.beatmap_attributes(self.osu_beatmap.id, mods=ossapi.Mod(self.selected_mods_list))
-            pprint(self.osu_beatmap_difficulty_attributes)
 
-            # update selected mods that are displayed
+            # update beatmap settings based on mods, rounded off to 2 decimal places
+            # todo: remove float() casts once ossapi is updated to fix special cases where beatmap settings are int instead of float
+            # Stars
+            self.text_beatmap_stars.value = f'Stars: {round(self.osu_beatmap_difficulty_attributes.attributes.star_rating, 2)}'
+            # Length
+            # todo: add length modifier depending on DT/HT being selected
+            # CS
+            self.text_beatmap_cs.value = f'{round(get_beatmap_cs_with_mods(float(self.osu_beatmap.cs), self.selected_mods_list), 2):g}'
+            # AR
+            if self.osu_beatmap_difficulty_attributes.attributes.approach_rate:
+                self.text_beatmap_ar.value = f'{round(self.osu_beatmap_difficulty_attributes.attributes.approach_rate, 2):g}'
+            else:
+                self.text_beatmap_ar.value = '?'
+            # OD
+            if self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty:
+                self.text_beatmap_od.value = f'{round(self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty, 2):g}'
+            else:
+                self.text_beatmap_od.value = '?'
+            # HP
+            self.text_beatmap_hp.value = f'{round(get_beatmap_hp_with_mods(float(self.osu_beatmap.drain), self.selected_mods_list), 2):g}'
+            
+            # add tooltips for beatmap settings to show full stat value
+            self.text_beatmap_stars.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.star_rating}'
+            self.text_beatmap_cs.tooltip = f'{get_beatmap_cs_with_mods(self.osu_beatmap.cs, self.selected_mods_list)}'
+            self.text_beatmap_ar.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.approach_rate}'
+            self.text_beatmap_od.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty}'
+
+            # change color of beatmap settings depending on mod affecting each stat
+            # if FL is detected, override only Stars
+            if 'FL' in self.selected_mods_list:
+                self.text_beatmap_stars.color = App.OSU_COLOR_FL
+            # if HR/EZ/NM, override main color for all settings
+            if 'HR' in self.selected_mods_list:
+                self.text_beatmap_stars.color = App.OSU_COLOR_HR
+                self.text_beatmap_cs.color = App.OSU_COLOR_HR
+                self.text_beatmap_ar.color = App.OSU_COLOR_HR
+                self.text_beatmap_od.color = App.OSU_COLOR_HR
+                self.text_beatmap_hp.color = App.OSU_COLOR_HR
+            elif 'EZ' in self.selected_mods_list:
+                self.text_beatmap_stars.color = App.OSU_COLOR_EZ
+                self.text_beatmap_cs.color = App.OSU_COLOR_EZ
+                self.text_beatmap_ar.color = App.OSU_COLOR_EZ
+                self.text_beatmap_od.color = App.OSU_COLOR_EZ
+                self.text_beatmap_hp.color = App.OSU_COLOR_EZ
+            else:
+                self.text_beatmap_stars.color = ft.colors.BLACK
+                self.text_beatmap_cs.color = ft.colors.BLACK
+                self.text_beatmap_ar.color = ft.colors.BLACK
+                self.text_beatmap_od.color = ft.colors.BLACK
+                self.text_beatmap_hp.color = ft.colors.BLACK
+            # if DT/NC/HT is detected, override only Stars, AR, and OD
+            if 'DT' in self.selected_mods_list or 'NC' in self.selected_mods_list:
+                self.text_beatmap_stars.color = App.OSU_COLOR_DT
+                self.text_beatmap_ar.color = App.OSU_COLOR_DT
+                self.text_beatmap_od.color = App.OSU_COLOR_DT
+            elif 'HT' in self.selected_mods_list:
+                self.text_beatmap_stars.color = App.OSU_COLOR_HT
+                self.text_beatmap_ar.color = App.OSU_COLOR_HT
+                self.text_beatmap_od.color = App.OSU_COLOR_HT
+
+            # update displayed list of selected mods
             self.text_selected_mods.value = f'Mods: {ossapi.Mod(self.selected_mods_list)}'
-            await self._app.page.update_async() # type: ignore
 
-            # 
+            await self._app.page.update_async() # type: ignore
 
         return callback
 
