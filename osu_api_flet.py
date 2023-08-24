@@ -813,12 +813,12 @@ class BeatmapRenderer:
             # CS
             self.text_beatmap_cs.value = f'{round(get_beatmap_cs_with_mods(float(self.osu_beatmap.cs), self.selected_mods_list), 2):g}'
             # AR
-            if self.osu_beatmap_difficulty_attributes.attributes.approach_rate:
+            if self.osu_beatmap_difficulty_attributes.attributes.approach_rate is not None:
                 self.text_beatmap_ar.value = f'{round(self.osu_beatmap_difficulty_attributes.attributes.approach_rate, 2):g}'
             else:
                 self.text_beatmap_ar.value = '?'
             # OD
-            if self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty:
+            if self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty is not None:
                 self.text_beatmap_od.value = f'{round(self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty, 2):g}'
             else:
                 self.text_beatmap_od.value = '?'
