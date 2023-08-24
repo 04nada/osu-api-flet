@@ -11,6 +11,7 @@ from ossapi import OssapiAsync # type: ignore
 
 # ---
 
+ModWorthPP = Literal['HD', 'HR', 'EZ', 'DT', 'NC', 'HT', 'FL', 'NF', 'SO']
 Scene = Literal['login', 'search']
 
 @dataclass
@@ -386,6 +387,7 @@ class BeatmapRenderer:
     osu_beatmap_owner: ossapi.User = field(init=False)
 
     ### Data
+    selected_mods_list: list[ModWorthPP] = field(init=False)
 
     ### Controls
     container_beatmap_metadata: ft.Container = field(init=False)
@@ -410,6 +412,14 @@ class BeatmapRenderer:
     text_beatmap_hp: ft.Text = field(init=False)
         # beatmap mods
     container_beatmap_mods: ft.Container = field(init=False)
+    text_selected_mods: ft.Text = field(init=False)
+    button_mod_nm: ft.IconButton = field(init=False)
+    button_mod_hd: ft.IconButton = field(init=False)
+    button_mod_hr: ft.IconButton = field(init=False)
+    button_mod_ez: ft.IconButton = field(init=False)
+    button_mod_dt: ft.IconButton = field(init=False)
+    button_mod_nc: ft.IconButton = field(init=False)
+    button_mod_ht: ft.IconButton = field(init=False)
 
     def __post_init__(self) -> None:
         self.osu_beatmapset = self.osu_beatmap.beatmapset()
@@ -584,6 +594,118 @@ class BeatmapRenderer:
             data_text_style=ft.TextStyle(color=ft.colors.BLACK)
         )
 
+        # --- -----
+        
+        self.selected_mods_list = []
+        self.text_selected_mods = ft.Text(
+            value=''.join(self.selected_mods_list)
+        )
+
+        # NoMod
+        self.button_mod_nm = ft.IconButton(
+            content=ft.Text('NM'),
+            on_click=self.toggle_mod_button('NM')
+        )
+
+        # HD
+        self.button_mod_hd = ft.IconButton(
+            content=ft.Text('HD'),
+            on_click=self.toggle_mod_button('HD')
+        )
+        
+        # HR, EZ
+        self.button_mod_hr = ft.IconButton(
+            content=ft.Text('HR'),
+            on_click=self.toggle_mod_button('HR')
+        )
+        self.button_mod_ez = ft.IconButton(
+            content=ft.Text('EZ'),
+            on_click=self.toggle_mod_button('EZ')
+        )
+
+        # DT, NC, HT
+        self.button_mod_dt = ft.IconButton(
+            content=ft.Text('DT'),
+            on_click=self.toggle_mod_button('DT')
+        )
+        self.button_mod_nc = ft.IconButton(
+            content=ft.Text('NC'),
+            on_click=self.toggle_mod_button('NC')
+        )
+        self.button_mod_ht = ft.IconButton(
+            content=ft.Text('HT'),
+            on_click=self.toggle_mod_button('HT')
+        )
+
+        # FL
+        self.button_mod_fl = ft.IconButton(
+            content=ft.Text('FL'),
+            on_click=self.toggle_mod_button('FL')
+        )
+
+        # NF
+        self.button_mod_nf = ft.IconButton(
+            content=ft.Text('NF'),
+            on_click=self.toggle_mod_button('NF')
+        )
+
+        # SO
+        self.button_mod_so = ft.IconButton(
+            content=ft.Text('SO'),
+            on_click=self.toggle_mod_button('SO')
+        )
+
+        self.container_beatmap_mods = ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.text_selected_mods,
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_nm
+                                ]
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_hd
+                                ]
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_hr,
+                                    self.button_mod_ez
+                                ]
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_dt,
+                                    self.button_mod_nc,
+                                    self.button_mod_ht,
+                                ]
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_fl
+                                ]
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_nf
+                                ]
+                            ),
+                            ft.Column(
+                                controls=[
+                                    self.button_mod_so
+                                ]
+                            )
+                        ],
+                        vertical_alignment=ft.CrossAxisAlignment.START
+                    )
+                ]
+            )
+        )
+
     async def _post_init_async(self):
         # await coroutine to get the user that mapped the beatmap
             # ignore type until Ossapi fixes the type hint of user() to be Union[User, Awaitable[User]] instead of just User
@@ -629,6 +751,35 @@ class BeatmapRenderer:
             padding=ft.padding.all(20)
         )
     
+    def toggle_mod_button(self, mod:ModWorthPP | Literal['NM']):
+        async def callback(_: ft.ControlEvent) -> None:
+            if mod == 'NM':
+                self.selected_mods_list = []
+            else:
+                if mod in self.selected_mods_list:
+                    self.selected_mods_list = [selected_mod for selected_mod in self.selected_mods_list if selected_mod != mod]
+                else:
+                    # dict denoting a list of all mods that conflict with a given mod
+                    conflict_mods: dict[ModWorthPP, list[ModWorthPP]] = {
+                        'HR': ['EZ'],
+                        'EZ': ['HR'],
+                        'DT': ['NC', 'HT'],
+                        'NC': ['DT', 'HT'],
+                        'HT': ['DT', 'NC']
+                    }
+
+                    # remove all mods that conflict with a newly selected mod
+                    self.selected_mods_list = [selected_mod for selected_mod in self.selected_mods_list if selected_mod not in conflict_mods.get(mod, [])]
+
+                    # add the actual mod to the list of selected mods
+                    self.selected_mods_list.append(mod)
+
+            # update list of selected mods
+            self.text_selected_mods.value = ''.join(self.selected_mods_list)
+            await self._app.page.update_async() # type: ignore
+
+        return callback
+
     @classmethod
     async def init_async(cls, app:App, osu_beatmap:ossapi.Beatmap) -> BeatmapRenderer:
         beatmap_renderer = BeatmapRenderer(app, osu_beatmap)
@@ -641,7 +792,8 @@ class BeatmapRenderer:
                 controls=[
                     self.container_beatmap_metadata,
                     self.container_beatmap_statistics,
-                    self.datatable_beatmap_settings
+                    self.datatable_beatmap_settings,
+                    self.container_beatmap_mods
                 ]
             )
         )
