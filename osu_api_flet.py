@@ -8,6 +8,7 @@ import os
 import ossapi as ossapi # type: ignore
 import ossapi.models # type: ignore
 from ossapi import OssapiAsync # type: ignore
+from pprint import pprint
 
 # ---
 
@@ -149,8 +150,6 @@ class App:
             if self.page.auth.token.access_token: # type: ignore
                 try:
                     beatmap_ossapi: ossapi.Beatmap = await self.ossapi_handler.beatmap(int(self.beatmap_search_id))
-                    a: ossapi.models.DifficultyAttributes = await self.ossapi_handler.beatmap_attributes(int(self.beatmap_search_id), mods=ossapi.Mod(['DT']))
-                    print(a)
                     self.beatmap_search_results_obj = await BeatmapRenderer.init_async(self, beatmap_ossapi)
                     self.beatmap_search_results_text = ''
                     
@@ -385,6 +384,7 @@ class BeatmapRenderer:
     ### Ossapi
     osu_beatmapset: ossapi.Beatmapset = field(init=False)
     osu_beatmap_owner: ossapi.User = field(init=False)
+    osu_beatmap_difficulty_attributes: ossapi.models.DifficultyAttributes | None = field(init=False)
 
     ### Data
     selected_mods_list: list[ModWorthPP] = field(init=False)
@@ -598,7 +598,7 @@ class BeatmapRenderer:
         
         self.selected_mods_list = []
         self.text_selected_mods = ft.Text(
-            value=''.join(self.selected_mods_list)
+            value=f'Mods: {ossapi.Mod(self.selected_mods_list)}'
         )
 
         # NoMod
@@ -703,7 +703,8 @@ class BeatmapRenderer:
                         vertical_alignment=ft.CrossAxisAlignment.START
                     )
                 ]
-            )
+            ),
+            bgcolor='#DDDDDD',#App.OSU_PINK,
         )
 
     async def _post_init_async(self):
@@ -774,9 +775,14 @@ class BeatmapRenderer:
                     # add the actual mod to the list of selected mods
                     self.selected_mods_list.append(mod)
 
-            # update list of selected mods
-            self.text_selected_mods.value = ''.join(self.selected_mods_list)
+            self.osu_beatmap_difficulty_attributes = await self._app.ossapi_handler.beatmap_attributes(self.osu_beatmap.id, mods=ossapi.Mod(self.selected_mods_list))
+            pprint(self.osu_beatmap_difficulty_attributes)
+
+            # update selected mods that are displayed
+            self.text_selected_mods.value = f'Mods: {ossapi.Mod(self.selected_mods_list)}'
             await self._app.page.update_async() # type: ignore
+
+            # 
 
         return callback
 
@@ -788,13 +794,22 @@ class BeatmapRenderer:
 
     def render_osu_beatmap_info(self) -> ft.Container:
         return ft.Container(
-            content=ft.Column(
+            content=ft.Row(
                 controls=[
-                    self.container_beatmap_metadata,
-                    self.container_beatmap_statistics,
-                    self.datatable_beatmap_settings,
-                    self.container_beatmap_mods
-                ]
+                    ft.Column(
+                        controls=[
+                            self.container_beatmap_metadata,
+                            self.container_beatmap_statistics,
+                        ]
+                    ),
+                    ft.Column(
+                        controls=[
+                            self.datatable_beatmap_settings,
+                            self.container_beatmap_mods
+                        ]
+                    )
+                ],
+                vertical_alignment=ft.CrossAxisAlignment.START
             )
         )
 
