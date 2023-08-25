@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import flet as ft
 from flet_runtime.auth.oauth_provider import OAuthProvider # type: ignore
 #import aiohttp
+import math
 import os
 import ossapi as ossapi # type: ignore
 import ossapi.models # type: ignore
@@ -13,7 +14,10 @@ from ossapi import OssapiAsync # type: ignore
 
 ModWorthPP = Literal['HD', 'HR', 'EZ', 'DT', 'NC', 'HT', 'FL', 'NF', 'SO']
 
+# todo: remove float() casts for cs and hp once ossapi is updated to fix special cases where beatmap settings are int instead of float
 def get_beatmap_cs_with_mods(cs: float, mods: list[ModWorthPP]) -> float:
+    cs = float(cs)
+
     if 'EZ' in mods:
         return cs*0.5
     elif 'HR' in mods:
@@ -22,6 +26,8 @@ def get_beatmap_cs_with_mods(cs: float, mods: list[ModWorthPP]) -> float:
         return cs
 
 def get_beatmap_hp_with_mods(hp: float, mods: list[ModWorthPP]) -> float:
+    hp = float(hp)
+
     if 'EZ' in mods:
         return hp*0.5
     elif 'HR' in mods:
@@ -481,6 +487,7 @@ class BeatmapRenderer:
                     ]
                 )                
             ],
+            tooltip=f'{self.osu_beatmapset.artist} - {self.osu_beatmapset.title}',
             size=20,
             selectable=True
         )
@@ -496,7 +503,8 @@ class BeatmapRenderer:
                     url=f'https://osu.ppy.sh/u/{self.osu_beatmapset.creator}'
                 )
             ],
-            selectable=True
+            tooltip=f'{self.osu_beatmapset.creator}',
+            selectable=True,
         )
 
         # Beatmap Container without diff owner
@@ -514,10 +522,10 @@ class BeatmapRenderer:
 
         # --- -----
 
-        self.text_beatmap_stars = ft.Text(value=f'Stars: {self.osu_beatmap.difficulty_rating}', color=ft.colors.BLACK)
-        self.text_beatmap_length = ft.Text(value=f'Length: {self.osu_beatmap.total_length}', color=ft.colors.BLACK)
-        self.text_beatmap_max_combo = ft.Text(value=f'Max Combo: {self.osu_beatmap.max_combo}', color=ft.colors.BLACK)
-        self.text_beatmap_bpm = ft.Text(value=f'BPM: {self.osu_beatmap.bpm}', color=ft.colors.BLACK)
+        self.text_beatmap_stars = ft.Text(value=f'Stars: {self.osu_beatmap.difficulty_rating}', tooltip=f'{self.osu_beatmap.difficulty_rating}', color=ft.colors.BLACK)
+        self.text_beatmap_length = ft.Text(value=f'Length: {self.osu_beatmap.total_length}', tooltip=f'{self.osu_beatmap.total_length}', color=ft.colors.BLACK)
+        self.text_beatmap_max_combo = ft.Text(value=f'Max Combo: {self.osu_beatmap.max_combo}', tooltip=f'{self.osu_beatmap.max_combo}', color=ft.colors.BLACK)
+        self.text_beatmap_bpm = ft.Text(value=f'BPM: {self.osu_beatmap.bpm:g}' if self.osu_beatmap.bpm else 'BPM: ?', tooltip=f'{self.osu_beatmap.bpm if self.osu_beatmap.bpm else "?"}', color=ft.colors.BLACK) 
 
         self.container_beatmap_statistics = ft.Container(
             content=ft.Column(
@@ -532,10 +540,10 @@ class BeatmapRenderer:
             padding=ft.padding.all(20)
         )
 
-        self.text_beatmap_cs = ft.Text(value=f'{self.osu_beatmap.cs}')
-        self.text_beatmap_ar = ft.Text(value=f'{self.osu_beatmap.ar}')
-        self.text_beatmap_od = ft.Text(value=f'{self.osu_beatmap.accuracy}')
-        self.text_beatmap_hp = ft.Text(value=f'{self.osu_beatmap.drain}')
+        self.text_beatmap_cs = ft.Text(value=f'{self.osu_beatmap.cs}', tooltip=f'{self.osu_beatmap.cs}')
+        self.text_beatmap_ar = ft.Text(value=f'{self.osu_beatmap.ar}', tooltip=f'{self.osu_beatmap.ar}')
+        self.text_beatmap_od = ft.Text(value=f'{self.osu_beatmap.accuracy}', tooltip=f'{self.osu_beatmap.accuracy}')
+        self.text_beatmap_hp = ft.Text(value=f'{self.osu_beatmap.drain}', tooltip=f'{self.osu_beatmap.drain}')
 
         self.datatable_beatmap_settings = ft.DataTable(
             columns=[
@@ -623,7 +631,8 @@ class BeatmapRenderer:
         
         self.selected_mods_list = []
         self.text_selected_mods = ft.Text(
-            value=f'Mods: {ossapi.Mod(self.selected_mods_list)}'
+            value=f'Mods: {ossapi.Mod(self.selected_mods_list)}',
+            tooltip=f'{ossapi.Mod(self.selected_mods_list)}'
         )
 
         # NoMod
@@ -804,32 +813,56 @@ class BeatmapRenderer:
             # store difficulty attributes in instance variable to preserve API call results
             self.osu_beatmap_difficulty_attributes = await self._app.ossapi_handler.beatmap_attributes(self.osu_beatmap.id, mods=ossapi.Mod(self.selected_mods_list))
 
-            # update beatmap settings based on mods, rounded off to 2 decimal places
-            # todo: remove float() casts once ossapi is updated to fix special cases where beatmap settings are int instead of float
+            # ---
+
+            ### update beatmap settings based on mods, text rounded off to 2 decimal places, tooltips with exact value
+            
             # Stars
             self.text_beatmap_stars.value = f'Stars: {round(self.osu_beatmap_difficulty_attributes.attributes.star_rating, 2)}'
-            # Length
-            # todo: add length modifier depending on DT/HT being selected
+            self.text_beatmap_stars.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.star_rating}'
+            
+            # Length, BPM
+            if 'DT' in self.selected_mods_list or 'NC' in self.selected_mods_list:
+                self.text_beatmap_length.value = f'Length: {math.floor(self.osu_beatmap.total_length * 2/3)}'
+                self.text_beatmap_length.tooltip = f'{math.floor(self.osu_beatmap.total_length * 2/3)}'
+                self.text_beatmap_bpm.value = f'BPM: {round(self.osu_beatmap.bpm * 3/2, 3):g}' if self.osu_beatmap.bpm is not None else 'BPM: ?'
+                self.text_beatmap_bpm.tooltip = f'{(self.osu_beatmap.bpm * 3/2):g}' if self.osu_beatmap.bpm is not None else '?'
+            elif 'HT' in self.selected_mods_list:
+                self.text_beatmap_length.value = f'Length: {math.floor(self.osu_beatmap.total_length * 4/3)}'
+                self.text_beatmap_length.tooltip = f'{math.floor(self.osu_beatmap.total_length * 4/3)}'
+                self.text_beatmap_bpm.value = f'BPM: {round(self.osu_beatmap.bpm * 3/4, 3):g}' if self.osu_beatmap.bpm is not None else 'BPM: ?'
+                self.text_beatmap_bpm.tooltip = f'{(self.osu_beatmap.bpm * 3/4):g}' if self.osu_beatmap.bpm is not None else '?'
+            else:
+                self.text_beatmap_length.value = f'Length: {self.osu_beatmap.total_length}'
+                self.text_beatmap_length.tooltip = f'{self.osu_beatmap.total_length}'
+                self.text_beatmap_bpm.value = f'BPM: {self.osu_beatmap.bpm:g}' if self.osu_beatmap.bpm is not None else 'BPM: ?'
+                self.text_beatmap_bpm.tooltip = f'{self.osu_beatmap.bpm:g}' if self.osu_beatmap.bpm is not None else '?'
+            
             # CS
-            self.text_beatmap_cs.value = f'{round(get_beatmap_cs_with_mods(float(self.osu_beatmap.cs), self.selected_mods_list), 2):g}'
+            self.text_beatmap_cs.value = f'{round(get_beatmap_cs_with_mods(self.osu_beatmap.cs, self.selected_mods_list), 2):g}'
+            self.text_beatmap_cs.tooltip = f'{get_beatmap_cs_with_mods(self.osu_beatmap.cs, self.selected_mods_list):g}'
+
             # AR
             if self.osu_beatmap_difficulty_attributes.attributes.approach_rate is not None:
                 self.text_beatmap_ar.value = f'{round(self.osu_beatmap_difficulty_attributes.attributes.approach_rate, 2):g}'
+                self.text_beatmap_ar.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.approach_rate:g}'
             else:
                 self.text_beatmap_ar.value = '?'
+                self.text_beatmap_ar.tooltip = '?'
+            
             # OD
             if self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty is not None:
                 self.text_beatmap_od.value = f'{round(self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty, 2):g}'
+                self.text_beatmap_od.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty:g}'
             else:
                 self.text_beatmap_od.value = '?'
-            # HP
-            self.text_beatmap_hp.value = f'{round(get_beatmap_hp_with_mods(float(self.osu_beatmap.drain), self.selected_mods_list), 2):g}'
+                self.text_beatmap_od.tooltip = '?'
             
-            # add tooltips for beatmap settings to show full stat value
-            self.text_beatmap_stars.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.star_rating}'
-            self.text_beatmap_cs.tooltip = f'{get_beatmap_cs_with_mods(self.osu_beatmap.cs, self.selected_mods_list)}'
-            self.text_beatmap_ar.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.approach_rate}'
-            self.text_beatmap_od.tooltip = f'{self.osu_beatmap_difficulty_attributes.attributes.overall_difficulty}'
+            # HP
+            self.text_beatmap_hp.value = f'{round(get_beatmap_hp_with_mods(self.osu_beatmap.drain, self.selected_mods_list), 2):g}'
+            self.text_beatmap_hp.tooltip = f'{get_beatmap_hp_with_mods(self.osu_beatmap.drain, self.selected_mods_list):g}'
+
+            # ---
 
             # change color of beatmap settings depending on mod affecting each stat
             # if FL is detected, override only Stars
@@ -854,18 +887,26 @@ class BeatmapRenderer:
                 self.text_beatmap_ar.color = ft.colors.BLACK
                 self.text_beatmap_od.color = ft.colors.BLACK
                 self.text_beatmap_hp.color = ft.colors.BLACK
-            # if DT/NC/HT is detected, override only Stars, AR, and OD
+            # if DT/NC/HT is detected, override only Stars, Length, BPM, AR, and OD
             if 'DT' in self.selected_mods_list or 'NC' in self.selected_mods_list:
                 self.text_beatmap_stars.color = App.OSU_COLOR_DT
+                self.text_beatmap_length.color = App.OSU_COLOR_DT
+                self.text_beatmap_bpm.color = App.OSU_COLOR_DT
                 self.text_beatmap_ar.color = App.OSU_COLOR_DT
                 self.text_beatmap_od.color = App.OSU_COLOR_DT
             elif 'HT' in self.selected_mods_list:
                 self.text_beatmap_stars.color = App.OSU_COLOR_HT
+                self.text_beatmap_length.color = App.OSU_COLOR_HT
+                self.text_beatmap_bpm.color = App.OSU_COLOR_HT
                 self.text_beatmap_ar.color = App.OSU_COLOR_HT
                 self.text_beatmap_od.color = App.OSU_COLOR_HT
+            else:
+                self.text_beatmap_length.color = ft.colors.BLACK
+                self.text_beatmap_bpm.color = ft.colors.BLACK
 
             # update displayed list of selected mods
             self.text_selected_mods.value = f'Mods: {ossapi.Mod(self.selected_mods_list)}'
+            self.text_selected_mods.tooltip = f'{ossapi.Mod(self.selected_mods_list)}'
 
             await self._app.page.update_async() # type: ignore
 
@@ -940,16 +981,19 @@ class UserRenderer:
         # User Identification
         self.text_user_username = ft.Text(
             value=f'{self.osu_user.username}',
+            tooltip=f'{self.osu_user.username}',
             color=ft.colors.BLACK,
             selectable=True
         )
         self.text_user_title = ft.Text(
             value=f'"{self.osu_user.title}"',
+            tooltip=f'"{self.osu_user.title}"',
             color=ft.colors.BLACK,
             selectable=True
         )
         self.text_user_country = ft.Text(
             value=f'{self.osu_user.country_code} {self.osu_user_country.name}',
+            tooltip=f'{self.osu_user_country.name}',
             color=ft.colors.BLACK,
             selectable=True
         )
@@ -959,26 +1003,28 @@ class UserRenderer:
             spans=[
                 ft.TextSpan(text='Global: ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
-                    text=f'#{self.osu_user_statistics.global_rank}' if self.osu_user_statistics.global_rank else '#--',
+                    text=f'#{self.osu_user_statistics.global_rank if self.osu_user_statistics.global_rank else "--"}',
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
             ],
+            tooltip=f'Global: #{self.osu_user_statistics.global_rank if self.osu_user_statistics.global_rank else "--"}',
             selectable=True
         )
         self.text_user_country_rank = ft.Text(
             spans=[
                 ft.TextSpan(text='Country: ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
-                    text=f'#{self.osu_user_statistics.country_rank}' if self.osu_user_statistics.country_rank else '#--',
+                    text=f'#{self.osu_user_statistics.country_rank if self.osu_user_statistics.country_rank else "--"}' ,
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     )
                 )
             ],
+            tooltip=f'Country: #{self.osu_user_statistics.country_rank if self.osu_user_statistics.country_rank else "--"}',
             selectable=True
         )
         self.text_user_pp = ft.Text(
@@ -992,6 +1038,7 @@ class UserRenderer:
                     )
                 )
             ],
+            tooltip='{:,}pp'.format(self.osu_user_statistics.pp),
             selectable=True
         )
         self.text_user_accuracy = ft.Text(
@@ -1005,6 +1052,7 @@ class UserRenderer:
                     )
                 )
             ],
+            tooltip=f'Hit Accuracy: {self.osu_user_statistics.hit_accuracy}%',
             selectable=True
         )
         self.text_user_ranked_score = ft.Text(
@@ -1018,6 +1066,7 @@ class UserRenderer:
                     )
                 )
             ],
+            tooltip='Ranked Score: {:,}'.format(self.osu_user_statistics.ranked_score),
             selectable=True
         )
 
