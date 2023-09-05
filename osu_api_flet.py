@@ -14,10 +14,7 @@ from ossapi import OssapiAsync # type: ignore
 
 ModWorthPP = Literal['HD', 'HR', 'EZ', 'DT', 'NC', 'HT', 'FL', 'NF', 'SO']
 
-# todo: remove float() casts for cs and hp once ossapi is updated to fix special cases where beatmap settings are int instead of float
 def get_beatmap_cs_with_mods(cs: float, mods: list[ModWorthPP]) -> float:
-    cs = float(cs)
-
     if 'EZ' in mods:
         return cs*0.5
     elif 'HR' in mods:
@@ -26,8 +23,6 @@ def get_beatmap_cs_with_mods(cs: float, mods: list[ModWorthPP]) -> float:
         return cs
 
 def get_beatmap_hp_with_mods(hp: float, mods: list[ModWorthPP]) -> float:
-    hp = float(hp)
-
     if 'EZ' in mods:
         return hp*0.5
     elif 'HR' in mods:
@@ -622,7 +617,7 @@ class BeatmapRenderer:
             heading_row_color=ft.colors.WHITE,
             heading_text_style=ft.TextStyle(color=ft.colors.BLACK),
                 # data row
-            data_row_height=25,
+            data_row_min_height=25,
             data_row_color=ft.colors.WHITE,
             data_text_style=ft.TextStyle(color=ft.colors.BLACK)
         )
@@ -747,7 +742,8 @@ class BeatmapRenderer:
             # ignore type until Ossapi fixes the type hint of user() to be Union[User, Awaitable[User]] instead of just User
         #assert isawaitable(self.osu_beatmap.user())
         self.osu_beatmap_owner = await self.osu_beatmap.user() # type: ignore       
-        
+        assert isinstance(self.osu_beatmap_owner, ossapi.User)
+
         # --- -----
 
         self.text_beatmap_version_owner = ft.Text(
@@ -762,12 +758,12 @@ class BeatmapRenderer:
                 ),
                 ft.TextSpan(text='] mapped by ', style=ft.TextStyle(color=ft.colors.BLACK)),
                 ft.TextSpan(
-                    text=f'{self.osu_beatmap_owner.username}', # type: ignore
+                    text=f'{self.osu_beatmap_owner.username}',
                     style=ft.TextStyle(
                         weight=ft.FontWeight.BOLD,
                         color=ft.colors.BLACK
                     ),
-                    url=f'https://osu.ppy.sh/u/{self.osu_beatmap_owner.username}' # type: ignore
+                    url=f'https://osu.ppy.sh/u/{self.osu_beatmap_owner.username}'
                 )
             ],
             selectable=True
