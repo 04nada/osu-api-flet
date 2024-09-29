@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any, Literal
 from dataclasses import dataclass, field
+import base64
 import flet as ft # type: ignore
 from flet_runtime.auth.oauth_provider import OAuthProvider # type: ignore
 #import aiohttp
@@ -9,6 +10,7 @@ import os
 import ossapi as ossapi # type: ignore
 import ossapi.models # type: ignore
 from ossapi import OssapiAsync # type: ignore
+import requests
 
 # --- -----
 
@@ -120,7 +122,7 @@ class App:
             user_scopes = self.USER_SCOPES
         )
 
-        self.page.login(provider) # type: ignore
+        await self.page.login(provider) # type: ignore
 
     '''
     async def get_beatmap_raw(self, _: ft.ControlEvent) -> None:
@@ -273,7 +275,7 @@ class App:
     async def logout_click(self, _: ft.ControlEvent) -> None:
         """use Flet's built-in logout function to clear the page.auth access token and (manually) return to the login page
         """
-        self.page.logout() # type: ignore
+        await self.page.logout() # type: ignore
     
     # ---
 
@@ -452,8 +454,12 @@ class BeatmapRenderer:
 
         # --- -----
 
+        # temp: fetch image as base64 manually, since Flet is unable to load images if view=ft.AppView.WEB_BROWSER for flet>=0.21.1
+        # see: https://github.com/flet-dev/flet/issues/2851
+
         self.image_beatmap_banner = ft.Image(
-            src='https://assets.ppy.sh/beatmaps/1/covers/cover@2x.jpg',
+            #src=self.osu_beatmapset.covers.cover_2x,
+            src_base64=base64.b64encode(requests.get(self.osu_beatmapset.covers.cover_2x).content).decode('utf-8'),
             width=400,
             fit=ft.ImageFit.CONTAIN,
             gapless_playback=True
@@ -966,9 +972,13 @@ class UserRenderer:
 
         # --- -----
 
+        # temp: fetch image as base64 manually, since Flet is unable to load images if view=ft.AppView.WEB_BROWSER for flet>=0.21.1
+        # see: https://github.com/flet-dev/flet/issues/2851
+
         # User Avatar
         self.image_user_profile_url = ft.Image(
-            src=self.osu_user.avatar_url,
+            #src=self.osu_user.avatar_url,
+            src_base64=base64.b64encode(requests.get(self.osu_user.avatar_url).content).decode('utf-8'),
             width=150,
             height=150,
             fit=ft.ImageFit.CONTAIN
