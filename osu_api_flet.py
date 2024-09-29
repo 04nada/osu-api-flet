@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Literal
 from dataclasses import dataclass, field
-import flet as ft
+import flet as ft # type: ignore
 from flet_runtime.auth.oauth_provider import OAuthProvider # type: ignore
 #import aiohttp
 import math
@@ -39,7 +39,7 @@ class App:
     page: ft.Page
 
     ### API Access 
-    REDIRECT_URL: str = 'https://zero4nada-osu-api-flet.onrender.com/api/oauth/redirect'
+    REDIRECT_URL: str = 'https://zero4nada-osu-api-flet.onrender.com/api/oauth_callback'
 
     client_id: str = field(init=False)
     client_secret: str = field(init=False)
@@ -120,7 +120,7 @@ class App:
             user_scopes = self.USER_SCOPES
         )
 
-        await self.page.login_async(provider) # type: ignore
+        self.page.login(provider) # type: ignore
 
     '''
     async def get_beatmap_raw(self, _: ft.ControlEvent) -> None:
@@ -128,7 +128,7 @@ class App:
             self.beatmap_search_results_text = 'Search is empty'
             
             self.text_beatmap_search_results.value = self.beatmap_search_results_text
-            await self.page.update_async() # type: ignore
+            self.page.update() # type: ignore
         else:
             self.beatmap_search_id = self.textfield_beatmap_id.value
 
@@ -149,17 +149,17 @@ class App:
                     self.beatmap_search_results_text = str(data)
 
                     self.text_beatmap_search_results.value = self.beatmap_search_results_text
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
                 except aiohttp.ContentTypeError:
                     self.beatmap_search_results_text = 'Could not retrieve beatmap ID'
                     
                     self.text_beatmap_search_results.value = self.beatmap_search_results_text
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
             else:
                 self.beatmap_search_results_text = 'Could not get authorization'
 
                 self.text_beatmap_search_results.value = self.beatmap_search_results_text
-                await self.page.update_async() # type: ignore
+                self.page.update() # type: ignore
     '''
 
     async def get_beatmap(self, _: ft.ControlEvent) -> None:
@@ -169,7 +169,7 @@ class App:
             
             self.container_beatmap_search_results = ft.Container()
             self.text_beatmap_search_results.value = self.beatmap_search_results_text
-            await self.page.update_async() # type: ignore
+            self.page.update() # type: ignore
         else:
             self.beatmap_search_id = self.textfield_beatmap_id.value
 
@@ -181,21 +181,21 @@ class App:
                     
                     self.container_beatmap_search_results.content = self.beatmap_search_results_obj.render_osu_beatmap_info()
                     self.text_beatmap_search_results.value = ''
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
                 except:
                     self.beatmap_search_results_obj = None
                     self.beatmap_search_results_text = 'Could not find beatmap'
 
                     self.container_beatmap_search_results.content = None
                     self.text_beatmap_search_results.value = self.beatmap_search_results_text
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
             else:
                 self.beatmap_search_results_obj = None
                 self.beatmap_search_results_text = 'Could not get authorization'
 
                 self.container_beatmap_search_results.content = None
                 self.text_beatmap_search_results.value = self.beatmap_search_results_text
-                await self.page.update_async() # type: ignore
+                self.page.update() # type: ignore
 
     '''
     async def get_user_raw(self, _: ft.ControlEvent) -> None:
@@ -203,7 +203,7 @@ class App:
             self.user_search_results_text = 'Search is empty'
             
             self.text_user_search_results.value = self.user_search_results_text
-            await self.page.update_async() # type: ignore
+            self.page.update() # type: ignore
         else:
             self.user_search_id_or_name = self.textfield_user_id_or_name.value
 
@@ -224,17 +224,17 @@ class App:
                     self.user_search_results_text = str(data)
 
                     self.text_user_search_results.value = self.user_search_results_text
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
                 except aiohttp.ContentTypeError:
                     self.user_search_results_text = 'Could not retrieve user ID or username'
                     
                     self.text_user_search_results.value = self.user_search_results_text
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
             else:
                 self.beatmap_search_results_text = 'Could not get authorization'
 
                 self.text_beatmap_search_results.value = self.beatmap_search_results_text
-                await self.page.update_async() # type: ignore
+                self.page.update() # type: ignore
     '''
 
     async def get_user(self, _: ft.ControlEvent) -> None:
@@ -242,7 +242,7 @@ class App:
             self.user_search_results_text = 'Search is empty'
             
             self.text_user_search_results.value = self.user_search_results_text
-            await self.page.update_async() # type: ignore
+            self.page.update() # type: ignore
         else:
             self.user_search_id_or_name = self.textfield_user_id_or_name.value
 
@@ -254,26 +254,26 @@ class App:
 
                     self.container_user_search_results.content = self.user_search_results_obj.render_osu_user_info()
                     self.text_user_search_results.value = ''
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
                 except:
                     self.user_search_results_obj = None
                     self.user_search_results_text = 'Could not find user'
 
                     self.container_user_search_results.content = None
                     self.text_user_search_results.value = self.user_search_results_text
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
             else:
                 self.user_search_results_obj = None
                 self.user_search_results_text = 'Could not get authorization'
 
                 self.container_user_search_results.content = None
                 self.text_user_search_results.value = self.user_search_results_text
-                await self.page.update_async() # type: ignore
+                self.page.update() # type: ignore
     
     async def logout_click(self, _: ft.ControlEvent) -> None:
         """use Flet's built-in logout function to clear the page.auth access token and (manually) return to the login page
         """
-        await self.page.logout_async()
+        self.page.logout() # type: ignore
     
     # ---
 
@@ -362,7 +362,7 @@ class App:
                         case _:
                             self.container_search_navigation_body.content = ft.Text('Could not navigate click', color=ft.colors.BLACK)
                         
-                    await self.page.update_async() # type: ignore
+                    self.page.update() # type: ignore
 
                 # set default navigation body to beatmap search
                 await set_navigation_body(0)
@@ -375,10 +375,10 @@ class App:
                 self.navbar_search_navigation = ft.NavigationBar(
                     selected_index=0,
                     destinations=[
-                        ft.NavigationDestination(
+                        ft.NavigationBarDestination(
                             label='Beatmap'
                         ),
-                        ft.NavigationDestination(
+                        ft.NavigationBarDestination(
                             label='User'
                         )
                     ],
@@ -392,7 +392,7 @@ class App:
                 view.controls.append(self.navbar_search_navigation)
 
         self.page.views.append(view)
-        await self.page.update_async() # type: ignore
+        self.page.update() # type: ignore
 
     @classmethod
     async def main(cls, page: ft.Page) -> None:
@@ -453,7 +453,7 @@ class BeatmapRenderer:
         # --- -----
 
         self.image_beatmap_banner = ft.Image(
-            self.osu_beatmapset.covers.cover_2x,
+            src='https://assets.ppy.sh/beatmaps/1/covers/cover@2x.jpg',
             width=400,
             fit=ft.ImageFit.CONTAIN,
             gapless_playback=True
@@ -742,7 +742,7 @@ class BeatmapRenderer:
             # ignore type until Ossapi fixes the type hint of user() to be Union[User, Awaitable[User]] instead of just User
         #assert isawaitable(self.osu_beatmap.user())
         self.osu_beatmap_owner = await self.osu_beatmap.user() # type: ignore       
-        assert isinstance(self.osu_beatmap_owner, ossapi.User)
+        assert isinstance(self.osu_beatmap_owner, ossapi.User) # type: ignore   
 
         # --- -----
 
@@ -904,7 +904,7 @@ class BeatmapRenderer:
             self.text_selected_mods.value = f'Mods: {ossapi.Mod(self.selected_mods_list)}'
             self.text_selected_mods.tooltip = f'{ossapi.Mod(self.selected_mods_list)}'
 
-            await self._app.page.update_async() # type: ignore
+            self._app.page.update() # type: ignore
 
         return callback
 
@@ -1104,4 +1104,4 @@ class UserRenderer:
     def render_osu_user_info(self) -> ft.Container:
         return self.container_user_body
 
-ft.app(target=App.main, port=80, view=ft.AppView.WEB_BROWSER, web_renderer=ft.WebRenderer.HTML) # type: ignore
+ft.app(target=App.main, port=80, view=ft.AppView.WEB_BROWSER, web_renderer=ft.WebRenderer.CANVAS_KIT) # type: ignore
