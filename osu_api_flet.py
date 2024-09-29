@@ -39,7 +39,7 @@ class App:
     page: ft.Page
 
     ### API Access 
-    REDIRECT_URL: str = 'https://zero4nada-osu-api-flet.onrender.com/api/oauth_callback'
+    REDIRECT_URL: str = 'https://zero4nada-osu-api-flet.onrender.com/oauth_callback'
 
     client_id: str = field(init=False)
     client_secret: str = field(init=False)
