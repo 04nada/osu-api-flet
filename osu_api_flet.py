@@ -814,7 +814,7 @@ class BeatmapRenderer:
 
             # store difficulty attributes in instance variable to preserve API call results
             self.osu_beatmap_difficulty_attributes = await self._app.ossapi_handler.beatmap_attributes(self.osu_beatmap.id, mods=ossapi.Mod(self.selected_mods_list))
-
+                
             # ---
 
             ### update beatmap settings based on mods, text rounded off to 2 decimal places, tooltips with exact value
